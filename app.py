@@ -326,8 +326,8 @@ with st.expander('View Rebates Data'):
 #CREATING A DOWNLOAD BUTTON 
 df_download=df_using.copy()
 df_download.set_axis(['location name','naics code','naics title','post_date','sales/use date','tax distributed','rebate','tax rate','taxables sales','current naics code','new naics title','description','update note','sales year','sales month'],axis=1,inplace=True)
-df_download=df_download[['location name','naics code','sales/use date','tax distributed','tax rate','description','update note']]
-df_download['sales/use date']=df_download['sales/use date'].astype(str).str[0:10]
+df_download=df_download[['location name','naics code','post_date','tax distributed','tax rate','rebate','update note','description']]
+df_download['post_date']=df_download['post_date'].astype(str).str[0:10]
 #DOWNLOAD FILE
 if st.button('Generate Download Link',help="Download all data available for the Geography and NAICS Code selected"):
     csv = df_download.to_csv(index=False)
