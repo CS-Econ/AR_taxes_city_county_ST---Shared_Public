@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import plotly.express as px
 import pandas as pd
@@ -25,11 +23,26 @@ client = bigquery.Client(credentials=credentials)
 #            page_title="Arkansas Taxable Sales - Counties and Cities "{visibility:True;}
 #            </style>
 #st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
+menu_items = {
+	'Get help': 'https://www.youraedi.com',
+	'Report a bug': 'https://www.youraedi.com',	
+    'About':'''
+	 
+     ## Arkansas Cities and Counties Distribution Tool
+
+	 Information presented in this tool was collected from the Arkansas Department of Finance and Administration (DFA) Local Distribution by North American Industry Classification System (NAICS). 
+     This tool aims to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA.
+	'''
+}
+
 st.set_page_config(
     page_title="Arkansas Distribution - Cities and Counties ",
     page_icon="https://arkansaseconomist.com/wp-content/uploads/2020/04/cropped-aedit_favicon_prep-32x32.png",
     layout="centered",#centered
-    initial_sidebar_state="collapsed")
+    initial_sidebar_state="collapsed",
+    menu_items=menu_items)
 ############End of Header
 
 
@@ -346,5 +359,3 @@ with col2:
     st.image("https://youraedi.com/wp-content/uploads/2020/08/aediLogoDownload.png",width=100,use_column_width=False,output_format='JPEG')
 with col3:
     st.write(" ")
-
-
