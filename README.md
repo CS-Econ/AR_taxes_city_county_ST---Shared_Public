@@ -1,2 +1,2 @@
 # AR_taxes_city_county
-The goal of this tool is to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA. 
+Information presented on this tool was collected from the Arkansas Department of Finance and Administration (DFA) Local Distribution by North American Industry Classification System (NAICS). The goal of this tool is to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA. Please refer to their webpage if you have any data related questions.
