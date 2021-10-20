@@ -1,29 +1,16 @@
 import streamlit as st
-import plotly.express as px
+#import plotly.express as px
 import pandas as pd
-import numpy as np
-import pymysql
 import base64
 import pandas_gbq
 from google.oauth2 import service_account
 from google.cloud import bigquery
 
-# Create GCP API client.
+# GCP API client.
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
 client = bigquery.Client(credentials=credentials)
-
-
-###########Header
-#hide_streamlit_style = """
-#            <style>
-#            #MainMenu {visibility: hidden;}
-#            footer {visibility: hidden;}
-#            page_title="Arkansas Taxable Sales - Counties and Cities "{visibility:True;}
-#            </style>
-#st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
 
 menu_items = {
 	'Get help': 'https://www.youraedi.com',
@@ -31,7 +18,6 @@ menu_items = {
     'About':'''
 	 
      ## Arkansas Cities and Counties Distribution Tool
-
 	 Information presented in this tool was collected from the Arkansas Department of Finance and Administration (DFA) Local Distribution by North American Industry Classification System (NAICS). 
      This tool aims to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA.
 	'''
@@ -73,78 +59,169 @@ def caching_locations():
 city_choices=caching_locations()[0]
 county_choices=caching_locations()[1]
 
-#@st.cache(ttl=600)
+############CACHE
+if 'geo_ss' not in st.session_state:
+    st.session_state.geo_ss=''   
+if 'df_ss' not in st.session_state:
+    st.session_state.df_ss=''
+
+def ss_city():
+    st.session_state.geo_ss=geography_selected    
+    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
+    df = pandas_gbq.read_gbq(sql, credentials=credentials)
+    df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+    st.session_state.df_ss=df
+    return df
+
+def ss_county():
+    st.session_state.geo_ss=geography_selected    
+    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.county_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
+    df = pandas_gbq.read_gbq(sql, credentials=credentials)
+    df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+    st.session_state.df_ss=df
+    return df
+    
 ###############CITY or COUNTY selection
+##CITY RADIO SELECTED
 if (geography_selection=='City'):
 ###################
 #city_choices
     geography_chosen=city_choices
     ##########BUTTONS AND CONTENT
     #County Choice DROPDOWN
-    geography_selected=st.selectbox('Select City',geography_chosen)
-    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
-    df = pandas_gbq.read_gbq(sql, credentials=credentials)
-    df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
-    #NAICS Choice DROPDOWN
-    naics_choices=sorted(df['dfa_naics_title'].unique())
-    naics_selected=st.selectbox('Select NAICS',naics_choices)
-    df_using=df[df['dfa_naics_title']==naics_selected]
-    #YEARS
-    years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
-    years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
-    ###### Data changes
-    #sales year
-    lower_bound_year="2018"
-    upper_bound_year="2020"
-    df_using['post_date']=pd.to_datetime(df_using['post_date'])
-    df_using['sales_year']=df_using['post_date'].dt.year
-    df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
-    df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-    #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
-    
+    geography_selected=st.selectbox('Select City',geography_chosen,on_change=ss_city)
 
-    #DESCRIPTION OF NAICS CODE
-    with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
-        df_using['description'].iloc[0]
+    
+    if geography_selected:
+        #establishing new DB connection                           
+        if st.session_state.geo_ss!=geography_selected:
+            st.session_state.geo_ss=geography_selected            
+            df=ss_city()
+            #sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
+            #df = pandas_gbq.read_gbq(sql, credentials=credentials)
+            #df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+            #NAICS Choice DROPDOWN
+            naics_choices=sorted(df['dfa_naics_title'].unique())
+            naics_selected=st.selectbox('Select NAICS',naics_choices)
+            df_using=df[df['dfa_naics_title']==naics_selected]
+            #YEARS
+            years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
+            years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
+            ###### Data changes
+            #sales year
+            lower_bound_year="2018"
+            upper_bound_year="2020"
+            df_using['post_date']=pd.to_datetime(df_using['post_date'])
+            df_using['sales_year']=df_using['post_date'].dt.year
+            df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
+            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
+            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
+            
+
+            #DESCRIPTION OF NAICS CODE
+            with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
+                df_using['description'].iloc[0]
+                
+            #NOTE FOR CHANGE
+            if df_using['modified_indicator'].iloc[0]!=None:
+                st.write(df_using['modified_indicator'].iloc[0])
         
-    #NOTE FOR CHANGE
-    if df_using['modified_indicator'].iloc[0]!=None:
-        st.write(df_using['modified_indicator'].iloc[0])
-        
+        else: #use cached DB
+            df=st.session_state.df_ss            
+            naics_choices=sorted(df['dfa_naics_title'].unique())
+            naics_selected=st.selectbox('Select NAICS',naics_choices)
+            df_using=df[df['dfa_naics_title']==naics_selected]
+            #YEARS
+            years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
+            years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
+            ###### Data changes
+            #sales year
+            lower_bound_year="2018"
+            upper_bound_year="2020"
+            df_using['post_date']=pd.to_datetime(df_using['post_date'])
+            df_using['sales_year']=df_using['post_date'].dt.year
+            df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
+            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
+            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
+            
+
+            #DESCRIPTION OF NAICS CODE
+            with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
+                df_using['description'].iloc[0]
+                
+            #NOTE FOR CHANGE
+            if df_using['modified_indicator'].iloc[0]!=None:
+                st.write(df_using['modified_indicator'].iloc[0])
+
+#### COUNTY RADIO SELECTED        
 else:
 ###################
 #county_choices
     geography_chosen=county_choices
-    ##########BUTTONS AND CONTENT
-    #County Choice DROPDOWN
-    geography_selected=st.selectbox('Select County',geography_chosen)
-    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.county_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
-    df = pandas_gbq.read_gbq(sql, credentials=credentials)
-    df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
-    #NAICS Choice DROPDOWN
-    naics_choices=sorted(df['dfa_naics_title'].unique())
-    naics_selected=st.selectbox('Select NAICS',naics_choices)
-    df_using=df[df['dfa_naics_title']==naics_selected]
-    #YEARS
-    years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
-    years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
-    ###### Data changes
-    #sales year
-    lower_bound_year="2017"
-    upper_bound_year="2021"
-    df_using['post_date']=pd.to_datetime(df_using['post_date'])
-    df_using['sales_year']=df_using['post_date'].dt.year
-    df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
-    df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-    #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
+    geography_selected=st.selectbox('Select County',geography_chosen,on_change=ss_county)
 
-    #DESCRIPTION OF NAICS CODE
-    with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
-        df_using['description'].iloc[0]
+    if geography_selected:                            
+        #establishing new DB connection                           
+        if st.session_state.geo_ss!=geography_selected:
+            st.session_state.geo_ss=geography_selected #updating session state            
+            df=ss_county()
+    
+            ##########BUTTONS AND CONTENT
+            #County Choice DROPDOWN
+            #NAICS Choice DROPDOWN
+            naics_choices=sorted(df['dfa_naics_title'].unique())
+            naics_selected=st.selectbox('Select NAICS',naics_choices)
+            df_using=df[df['dfa_naics_title']==naics_selected]
+            #YEARS
+            years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
+            years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
+            ###### Data changes
+            #sales year
+            lower_bound_year="2017"
+            upper_bound_year="2021"
+            df_using['post_date']=pd.to_datetime(df_using['post_date'])
+            df_using['sales_year']=df_using['post_date'].dt.year
+            df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
+            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
+            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
 
-    #NOTE FOR CHANGE
-    if df_using['modified_indicator'].iloc[0]!=None:
-        st.write(df_using['modified_indicator'].iloc[0])
+            #DESCRIPTION OF NAICS CODE
+            with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
+                df_using['description'].iloc[0]
+
+            #NOTE FOR CHANGE
+            if df_using['modified_indicator'].iloc[0]!=None:
+                st.write(df_using['modified_indicator'].iloc[0])
+        
+        else: #use cached DB connection                           
+            df=st.session_state.df_ss  
+            ##########BUTTONS AND CONTENT
+            #County Choice DROPDOWN
+            #NAICS Choice DROPDOWN
+            naics_choices=sorted(df['dfa_naics_title'].unique())
+            naics_selected=st.selectbox('Select NAICS',naics_choices)
+            df_using=df[df['dfa_naics_title']==naics_selected]
+            #YEARS
+            years_choice=sorted((df_using['post_date'].astype('str').str[0:4]).unique())
+            years_selected=st.multiselect('Select years (multiple selection allowed)',years_choice)
+            ###### Data changes
+            #sales year
+            lower_bound_year="2017"
+            upper_bound_year="2021"
+            df_using['post_date']=pd.to_datetime(df_using['post_date'])
+            df_using['sales_year']=df_using['post_date'].dt.year
+            df_using['sales_month']=df_using['post_date'].dt.strftime('%b')
+            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
+            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
+
+            #DESCRIPTION OF NAICS CODE
+            with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
+                df_using['description'].iloc[0]
+
+            #NOTE FOR CHANGE
+            if df_using['modified_indicator'].iloc[0]!=None:
+                st.write(df_using['modified_indicator'].iloc[0])
+
 
 
 #OUTPUT 
