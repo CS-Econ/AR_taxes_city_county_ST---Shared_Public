@@ -70,6 +70,9 @@ def ss_city():
     sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
     df = pandas_gbq.read_gbq(sql, credentials=credentials)
     df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+    #fix date
+    df['post_date'] =  pd.to_datetime(df['post_date'], format='%m/%d/%Y')
+    df['sales_date'] =  pd.to_datetime(df['sales_date'], format='%m/%d/%Y')
     st.session_state.df_ss=df
     return df
 
@@ -78,6 +81,9 @@ def ss_county():
     sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.county_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
     df = pandas_gbq.read_gbq(sql, credentials=credentials)
     df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+    #fix date
+    df['post_date'] =  pd.to_datetime(df['post_date'], format='%m/%d/%Y')
+    df['sales_date'] =  pd.to_datetime(df['sales_date'], format='%m/%d/%Y')    
     st.session_state.df_ss=df
     return df
     
