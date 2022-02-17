@@ -67,7 +67,7 @@ if 'df_ss' not in st.session_state:
 
 def ss_city():
     st.session_state.geo_ss=geography_selected    
-    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
+    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE locationname ='+ "'"+ geography_selected+"'"
     df = pandas_gbq.read_gbq(sql, credentials=credentials)
     df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
     #fix date
@@ -78,7 +78,7 @@ def ss_city():
 
 def ss_county():
     st.session_state.geo_ss=geography_selected    
-    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.county_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
+    sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.county_tax_view` WHERE locationname ='+ "'"+ geography_selected+"'"
     df = pandas_gbq.read_gbq(sql, credentials=credentials)
     df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
     #fix date
