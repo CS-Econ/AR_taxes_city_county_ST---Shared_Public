@@ -447,7 +447,7 @@ del data_download
 
 
 #CREATING THE FOOTNOTE AND INSERT LOGO
-st.write("This webpage is brought to you by the [Arkansas Economic Development Institute](https:www.youraedi.com)")
+st.write("This webpage is brought to you by the [Arkansas Economic Development Institute](https://www.youraedi.com)")
 col1,col2,col3=st.columns([2,1,2])
 with col1:
     st.write(" ")
