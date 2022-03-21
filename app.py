@@ -263,11 +263,11 @@ for i in years:
         )  
 
 fig.update_layout(
-    yaxis_title='Estimated Taxable Distribution' ,
+    yaxis_title='Estimated Tax Distribution' ,
     xaxis_title='Month',
     yaxis_tickprefix = '$', 
     yaxis_tickformat = ',.',
-    title='Estimated Taxable Distribution for '+ geography_selected + " " +  naics_selected,
+    title='Estimated Tax Distribution for '+ geography_selected + " " +  naics_selected,
     autosize=True,
     #width=800,
     #height=600,    
@@ -357,11 +357,11 @@ for i in years:
         )  
 
 fig.update_layout(
-    yaxis_title='Estimated Taxable Distribution' ,
+    yaxis_title='Estimated Tax Distribution' ,
     xaxis_title='Month',
     yaxis_tickprefix = '$', 
     yaxis_tickformat = ',.',
-    title='Estimated Taxable Distribution for '+ geography_selected + " - NAICS " +  digit3,
+    title='Estimated Tax Distribution for '+ geography_selected + " - NAICS " +  digit3,
     autosize=True,
     #width=800,
     #height=600,    
@@ -408,11 +408,11 @@ for i in years:
         )  
 
 fig.update_layout(
-    yaxis_title='Estimated Taxable Distribution' ,
+    yaxis_title='Estimated Tax Distribution' ,
     xaxis_title='Month',
     yaxis_tickprefix = '$', 
     yaxis_tickformat = ',.',
-    title='Estimated Taxable Distribution for '+ geography_selected + " - NAICS " +  digit2,
+    title='Estimated Tax Distribution for '+ geography_selected + " - NAICS " +  digit2,
     autosize=True,
     #width=800,
     #height=600,    
@@ -442,7 +442,7 @@ if years_selected:
 #create download button
 data_download=df[['locationname','naics_code','total','rebate','sales_date','post_date']]
 data_download=data_download.to_csv().encode('utf-8')
-st.download_button(label="Download data for "+geography_selected +" as CSV",data='data_download.csv',file_name=geography_selected+'tax_data'+'.csv',mime="text/csv")
+st.download_button(label="Download data for "+geography_selected +" as CSV",data=data_download,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
 del data_download
 
 
