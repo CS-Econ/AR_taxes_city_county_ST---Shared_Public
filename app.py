@@ -37,7 +37,7 @@ st.set_page_config(
 st.title('Arkansas Cities & Counties Distribution')
 st.write("")
 st.write("""
-Information presented on this page was collected from the [Arkansas Department of Finance and Administration] (https://www.ark.org/dfa/localtaxes/index.php) (DFA) Local Distribution by North American Industry Classification System (NAICS). 
+Information presented on this page was collected from the [Arkansas Department of Finance and Administration](https://www.ark.org/dfa/localtaxes/index.php) (DFA) Local Distribution by North American Industry Classification System (NAICS). 
 The goal of this page is to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA. Please refer to their webpage if you have any data reporting related questions.
 """)
 
