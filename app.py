@@ -237,6 +237,12 @@ else:
 #    lower_bound_year=str(min(years_selected))
 #    upper_bound_year=str(max(years_selected))
 
+# Note regarding DFA created categories
+dfa_assigned_groups=['Other','Automobile','NAICS with Less Than 3 Businesses','Wholesale Vending and Other Unidentified Receipts']
+if naics_selected in dfa_assigned_groups:
+    st.write('Please note that this is not a NAICS code, this is a category assigned by Arkansas DFA.Code provide were created for illustration purposes only and aggregations are not representative of any NAICS categories.')
+
+
 #creating saved values #ADDED
 # # 4 Digit Graphs
 
