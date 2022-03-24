@@ -88,7 +88,7 @@ def ss_county():
     df['sales_date'] =  pd.to_datetime(df['sales_date'], format='%m/%d/%Y')    
     st.session_state.df_ss=df
     return df
-    
+ 
 ###############CITY or COUNTY selection
 ##CITY RADIO SELECTED
 if (geography_selection=='City'):
@@ -118,7 +118,7 @@ if (geography_selection=='City'):
             ###### Data changes
             #sales year
             lower_bound_year="2017"
-            upper_bound_year="2021"
+            upper_bound_year="2022"
             df_using['post_date']=pd.to_datetime(df_using['post_date'])
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
@@ -144,7 +144,7 @@ if (geography_selection=='City'):
             ###### Data changes
             #sales year
             lower_bound_year="2017"
-            upper_bound_year="2021"
+            upper_bound_year="2022"
             df_using['post_date']=pd.to_datetime(df_using['post_date'])
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
@@ -185,7 +185,7 @@ else:
             ###### Data changes
             #sales year
             lower_bound_year="2017"
-            upper_bound_year="2021"
+            upper_bound_year="2022"
             df_using['post_date']=pd.to_datetime(df_using['post_date'])
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
@@ -214,7 +214,7 @@ else:
             ###### Data changes
             #sales year
             lower_bound_year="2017"
-            upper_bound_year="2021"
+            upper_bound_year="2022"
             df_using['post_date']=pd.to_datetime(df_using['post_date'])
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
@@ -238,7 +238,7 @@ else:
 #    upper_bound_year=str(max(years_selected))
 
 # Note regarding DFA created categories
-dfa_assigned_groups=['Other','Automobile','NAICS with Less Than 3 Businesses','Wholesale Vending and Other Unidentified Receipts']
+dfa_assigned_groups=['Other','Automobile','NAICS with Less Than 3 Businesses','Wholesale Vending and Other Unidentified Receipts','Other Adjustments']
 if naics_selected in dfa_assigned_groups:
     st.write('Please note that this is not a NAICS code, this is a category assigned by Arkansas DFA.Code provide were created for illustration purposes only and aggregations are not representative of any NAICS categories.')
 
@@ -254,8 +254,8 @@ df_using['post_month']=df_using['post_date'].dt.strftime('%b')
 
 #4 Digit NAICS Graph
 fig=go.Figure()
-years=np.arange(2017,2022).astype(str)
-color_graphs=['red','blue','green','purple','orange']
+years=np.arange(2017,2023).astype(str)
+color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
 graph_colors=dict(zip(years, color_graphs))
 for i in years:
     if str(i) in years_selected:                
@@ -292,8 +292,8 @@ if years_selected:
 
 with st.expander('View Rebates Data'):
     fig=go.Figure()
-    years=np.arange(2017,2022).astype(str)
-    color_graphs=['red','blue','green','purple','orange']
+    years=np.arange(2017,2023).astype(str)
+    color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
     graph_colors=dict(zip(years, color_graphs))
     for i in years:
         if str(i) in years_selected:                
@@ -348,8 +348,8 @@ df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
 
 # 3 Digit NAICS Graph
 fig=go.Figure()
-years=np.arange(2017,2022).astype(str)
-color_graphs=['red','blue','green','purple','orange']
+years=np.arange(2017,2023).astype(str)
+color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
 graph_colors=dict(zip(years, color_graphs))
 for i in years:
     if str(i) in years_selected:                
@@ -399,8 +399,8 @@ df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
 
 # 3 Digit NAICS Graph
 fig=go.Figure()
-years=np.arange(2017,2022).astype(str)
-color_graphs=['red','blue','green','purple','orange']
+years=np.arange(2017,2023).astype(str)
+color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
 graph_colors=dict(zip(years, color_graphs))
 for i in years:
     if str(i) in years_selected:                
@@ -446,8 +446,8 @@ if years_selected:
 #    st.markdown(href, unsafe_allow_html=True)
 
 #create download button
-data_download=df[['locationname','naics_code','total','rebate','sales_date','post_date']]
-data_download=data_download.to_csv().encode('utf-8')
+data_download=df[['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
+data_download=data_download.to_csv(index=False).encode('utf-8')
 st.download_button(label="Download data for "+geography_selected +" as CSV",data=data_download,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
 del data_download
 
