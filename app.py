@@ -252,38 +252,84 @@ df_using=df_using.merge(idx17to21, how='right', on=['post_date'])
 df_using['post_year']=df_using['post_date'].dt.year
 df_using['post_month']=df_using['post_date'].dt.strftime('%b')
 
-#4 Digit NAICS Graph
-fig=go.Figure()
-years=np.arange(2017,2023).astype(str)
-color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
-graph_colors=dict(zip(years, color_graphs))
-for i in years:
-    if str(i) in years_selected:                
-        fig.add_scatter(
-            name='Year'+i,
-            x=df_using[df_using['post_year']==int(i)]['post_month'],            
-            y=df_using[df_using['post_year']==int(i)]['total'].round(2),
-            mode='markers+lines',
-            marker=dict(color=graph_colors[i], size=2),
-            showlegend=True
-        )  
+## Graph Functions 
+def unstacked_graphs(fn_df,naics_selection_name):
+    fig=go.Figure()
+    years=np.arange(2017,2023).astype(str)     
+    x=pd.DataFrame()# created for large time frame
+    y=pd.DataFrame()# created for large time frame
+    for i in years:
+        if str(i) in years_selected:           
+            x=x.append(fn_df[fn_df['post_year']==int(i)][['post_date']])
+            y=pd.concat([y,fn_df[fn_df['post_year']==int(i)]['total'].round(2)],ignore_index=False)                    
 
-fig.update_layout(
-    yaxis_title='Estimated Tax Distribution' ,
-    xaxis_title='Month',
-    yaxis_tickprefix = '$', 
-    yaxis_tickformat = ',.',
-    title='Estimated Tax Distribution for '+ geography_selected + " " +  naics_selected,
-    autosize=True,
-    #width=800,
-    #height=600,    
-    hovermode="x")
-# Plot Chart
-if years_selected:    
-        st.plotly_chart(fig,use_container_with=True)
+    x=pd.to_datetime(x['post_date']).dt.strftime('%m/%Y') #change to month/year
+    
+    fig.add_scatter(
+        name='Industry',
+        x=x,            
+        y=y[0],
+        mode='markers+lines',
+        marker=dict(color='navy', size=2),
+        showlegend=True
+    ) 
+
+    fig.update_layout(
+        yaxis_title='Estimated Tax Distribution' ,
+        xaxis_title='Month',
+        yaxis_tickprefix = '$', 
+        yaxis_tickformat = ',.',
+        title='Estimated Tax Distribution for '+ geography_selected + " " +  naics_selection_name,
+        autosize=True,
+        xaxis=go.layout.XAxis(tickangle=45),                
+        #width=800,
+        #height=600,    
+        hovermode="x")
+    # Plot Chart
+    if years_selected:    
+            st.plotly_chart(fig,use_container_with=True)
+
+def stacked_graphs(fn_df,naics_selection_name):
+    fig=go.Figure()
+    years=np.arange(2017,2023).astype(str)
+    color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
+    graph_colors=dict(zip(years, color_graphs))
+    for i in years:
+        if str(i) in years_selected:                
+            fig.add_scatter(
+                name='Year'+i,
+                x=fn_df[fn_df['post_year']==int(i)]['post_month'],            
+                y=fn_df[fn_df['post_year']==int(i)]['total'].round(2),
+                mode='markers+lines',
+                marker=dict(color=graph_colors[i], size=2),
+                showlegend=True
+            )  
+
+    fig.update_layout(
+        yaxis_title='Estimated Tax Distribution' ,
+        xaxis_title='Month',
+        yaxis_tickprefix = '$', 
+        yaxis_tickformat = ',.',
+        title='Estimated Tax Distribution for '+ geography_selected + " " +  naics_selection_name,
+        autosize=True,
+        #width=800,
+        #height=600,    
+        hovermode="x")
+    # Plot Chart
+    if years_selected:    
+            st.plotly_chart(fig,use_container_with=True)
 
 
-
+#GRAPH 1
+#4 Digit NAICS Graph    -----df_using, naics_selected
+clicked_unstack_1=st.checkbox('Unstack Table', key='clicked_unstacked_1')
+if clicked_unstack_1:
+    try:
+        unstacked_graphs(df_using,naics_selected)
+    except:
+        pass
+else:            
+    stacked_graphs(df_using,naics_selected)
 
 ############################
 
@@ -346,36 +392,16 @@ df_digit_temp=df_digit_temp.merge(idx17to21, how='right', on=['post_date'])
 df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
 df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
 
+#GRAPH 2
 # 3 Digit NAICS Graph
-fig=go.Figure()
-years=np.arange(2017,2023).astype(str)
-color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
-graph_colors=dict(zip(years, color_graphs))
-for i in years:
-    if str(i) in years_selected:                
-        fig.add_scatter(
-            name='Year'+i,
-            x=df_digit_temp[df_digit_temp['post_year']==int(i)]['post_month'],            
-            y=df_digit_temp[df_digit_temp['post_year']==int(i)]['total'].round(2),
-            mode='markers+lines',
-            marker=dict(color=graph_colors[i], size=2),
-            showlegend=True
-        )  
-
-fig.update_layout(
-    yaxis_title='Estimated Tax Distribution' ,
-    xaxis_title='Month',
-    yaxis_tickprefix = '$', 
-    yaxis_tickformat = ',.',
-    title='Estimated Tax Distribution for '+ geography_selected + " - NAICS " +  digit3,
-    autosize=True,
-    #width=800,
-    #height=600,    
-    hovermode="x")
-# Plot Chart
-if years_selected:    
-        st.plotly_chart(fig,use_container_with=True)
-
+clicked_unstack_2=st.checkbox('Unstack Table', key='clicked_unstacked_2')
+if clicked_unstack_2:
+    try:
+        unstacked_graphs(df_digit_temp,digit3)
+    except:
+        pass
+else:            
+    stacked_graphs(df_digit_temp,digit3)
 
 
 #Beginning of 2 Digit Analysis
@@ -397,39 +423,16 @@ df_digit_temp2=df_digit_temp2.merge(idx17to21, how='right', on=['post_date'])
 df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
 df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
 
-# 3 Digit NAICS Graph
-fig=go.Figure()
-years=np.arange(2017,2023).astype(str)
-color_graphs=['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#f781bf']
-graph_colors=dict(zip(years, color_graphs))
-for i in years:
-    if str(i) in years_selected:                
-        fig.add_scatter(
-            name='Year'+i,
-            x=df_digit_temp2[df_digit_temp2['post_year']==int(i)]['post_month'],            
-            y=df_digit_temp2[df_digit_temp2['post_year']==int(i)]['total'].round(2),
-            mode='markers+lines',
-            marker=dict(color=graph_colors[i], size=2),
-            showlegend=True
-        )  
-
-fig.update_layout(
-    yaxis_title='Estimated Tax Distribution' ,
-    xaxis_title='Month',
-    yaxis_tickprefix = '$', 
-    yaxis_tickformat = ',.',
-    title='Estimated Tax Distribution for '+ geography_selected + " - NAICS " +  digit2,
-    autosize=True,
-    #width=800,
-    #height=600,    
-    hovermode="x")
-# Plot Chart
-if years_selected:    
-        st.plotly_chart(fig,use_container_with=True)
-
-
-
-
+#GRAPH 3
+# 2 Digit NAICS Graph
+clicked_unstack_3=st.checkbox('Unstack Table', key='clicked_unstacked_3')
+if clicked_unstack_3:
+    try:
+        unstacked_graphs(df_digit_temp2,digit2)
+    except:
+        pass
+else:            
+    stacked_graphs(df_digit_temp2,digit2)
 
 #DOWNLOAD FILE DEPRECATED
 #df_download=df_using.copy()
@@ -461,6 +464,7 @@ with col2:
     st.image("https://youraedi.com/wp-content/uploads/2020/08/aediLogoDownload.png",width=100,use_column_width=False,output_format='JPEG')
 with col3:
     st.write(" ")
+
 
 
 
