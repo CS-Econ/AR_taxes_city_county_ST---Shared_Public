@@ -22,7 +22,12 @@ menu_items = {
      ## Arkansas Cities and Counties Distribution Tool
 	 Information presented in this tool was collected from the Arkansas Department of Finance and Administration (DFA) Local Distribution by North American Industry Classification System (NAICS). 
      This tool aims to make it easier for users to visualize and aggregate data provided by the Arkansas DFA.
-	'''
+
+     The data on this page are provided "as is", and AEDI assumes no responsibility for errors or omissions. The User assumes the entire risk associated with its use of these data.  AEDI shall not be held liable for any use or misuse of the data described and/or contained herein.  The User bears all responsibility in determining whether these data are fit for the User's intended use.
+     The information contained in these data is dynamic and may change over time. The data are not better than the original sources from which they were derived, and both scale and accuracy may vary across the data set.  These data may not have the accuracy, resolution, completeness, timeliness, or other characteristics appropriate for applications that potential users of the data may contemplate.  The User is encouraged to carefully consider the content of the metadata file associated with these data.  These data are neither official records, nor legal documents and must not be used as such.    AEDI should be cited as the data source in any products derived from these data. By using these data, you hereby agree to these conditions.
+     No warranty is made by AEDI for use or misuse of the data.  AEDI assumes no responsibility for errors or omissions.  No warranty is made by the AEDI as to the accuracy, reliability, relevancy, timeliness, utility, or completeness of these data, maps, geographic location for individual use or aggregate use with other data; nor shall the act of distribution to contractors, partners, or beyond, constitute any such warranty for individual or aggregate data use with other data. No warranty, expressed or implied, is made by AEDI regarding the use of these data on any other system, or for general or scientific purposes, nor does the fact of distribution constitute or imply any such warranty. In no event shall AEDI have any liability whatsoever for payment of any consequential, incidental, indirect, special, or tort damages of any kind, including, but not limited to, any loss. 
+
+	'''    
 }
 
 st.set_page_config(
@@ -38,7 +43,7 @@ st.title('Arkansas Cities & Counties Distribution')
 st.write("")
 st.write("""
 Information presented on this page was collected from the [Arkansas Department of Finance and Administration](https://www.ark.org/dfa/localtaxes/index.php) (DFA) Local Distribution by North American Industry Classification System (NAICS). 
-The goal of this page is to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA. Please refer to their webpage if you have any data reporting related questions.
+The goal of this page is to make it easier for users to visualize and aggregate data openly and freely provided by the Arkansas DFA. Please refer to their webpage if you have any data reporting related questions, including accuracy, reliability and completeness.
 """)
 
 
@@ -149,11 +154,10 @@ if (geography_selection=='City'):
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
             df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
-            
-
+            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)            
+            naics_code4=df_using[~df_using['naics_code'].isnull()]['naics_code'].astype(str).str[0:4].iloc[0]
             #DESCRIPTION OF NAICS CODE
-            with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
+            with st.expander('Expand to see Description of NAICS Code '+ str(naics_code4),expanded=False):
                 df_using['description'].iloc[0]
                 
             #NOTE FOR CHANGE
@@ -261,19 +265,24 @@ def unstacked_graphs(fn_df,naics_selection_name):
     for i in years:
         if str(i) in years_selected:           
             x=x.append(fn_df[fn_df['post_year']==int(i)][['post_date']])
-            y=pd.concat([y,fn_df[fn_df['post_year']==int(i)]['total'].round(2)],ignore_index=False)                    
+            #y=pd.concat([y,fn_df[fn_df['post_year']==int(i)]['total'].round(2)],ignore_index=False) 
 
+    x=pd.DataFrame(data=pd.date_range(start=min(x['post_date']),end=max(x['post_date']),freq='MS'), columns=['post_date']) #use this to select first and last month for graph
+    y=fn_df[fn_df['post_date'].isin(x['post_date'])]['total'].round(2)
     x=pd.to_datetime(x['post_date']).dt.strftime('%m/%Y') #change to month/year
     
+
     fig.add_scatter(
         name='Industry',
         x=x,            
-        y=y[0],
+        y=y,
         mode='markers+lines',
         marker=dict(color='navy', size=2),
         showlegend=True
-    ) 
-
+    )    
+    #fig.update_xaxes(
+    #dtick="M1",
+    #tickformat="%b%Y")
     fig.update_layout(
         yaxis_title='Estimated Tax Distribution' ,
         xaxis_title='Month',
@@ -281,10 +290,13 @@ def unstacked_graphs(fn_df,naics_selection_name):
         yaxis_tickformat = ',.',
         title='Estimated Tax Distribution for '+ geography_selected + " " +  naics_selection_name,
         autosize=True,
-        xaxis=go.layout.XAxis(tickangle=45),                
+        xaxis=go.layout.XAxis(tickangle=45),                        
         #width=800,
         #height=600,    
         hovermode="x")
+
+    
+    
     # Plot Chart
     if years_selected:    
             st.plotly_chart(fig,use_container_with=True)
@@ -322,14 +334,24 @@ def stacked_graphs(fn_df,naics_selection_name):
 
 #GRAPH 1
 #4 Digit NAICS Graph    -----df_using, naics_selected
-clicked_unstack_1=st.checkbox('Unstack Table', key='clicked_unstacked_1')
-if clicked_unstack_1:
-    try:
-        unstacked_graphs(df_using,naics_selected)
-    except:
-        pass
-else:            
-    stacked_graphs(df_using,naics_selected)
+if len(years_selected)>0:
+    clicked_unstack_1=st.checkbox('Unstack Table', key='clicked_unstacked_1')
+    if clicked_unstack_1:
+        try:
+            unstacked_graphs(df_using,naics_selected)
+        except:
+            pass
+    else:            
+        stacked_graphs(df_using,naics_selected)
+    #download option 1
+    #create download button
+    data_download1=df_using[(df_using['naics_code'].astype(str).str[0:4]==naics_code4) & (df_using['post_year'].astype(str).isin(years_selected))][['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
+    data_download1=data_download1.to_csv(index=False).encode('utf-8')
+    st.download_button(key='data_download1',label="Download 4 digit data for "+geography_selected +" as CSV",data=data_download1,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
+
+
+
+
 
 ############################
 
@@ -367,92 +389,114 @@ with st.expander('View Rebates Data'):
             st.plotly_chart(fig,use_container_with=True)
 
 #Beginning of 3 Digit Analysis
-
-st.subheader('Aggregated NAICS Information')
-st.write('Information presented below can underrepresent local distribution due to data limitations related to collection, reporting, aggregation and privacy')
-
-digit3=df[df['dfa_naics_title']==naics_selected]['naics_code'].iloc[0].astype(str)[0:3]
-df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
-# 3 Digit naics names df_digit_temp
-df_digit_temp=df[df['naics_code'].astype(str).str[0:3]==digit3]
-df_digit_temp['post_date'] =  pd.to_datetime(df_digit_temp['post_date'], format='%m/%d/%Y')
-df_digit_temp['sales_date'] =  pd.to_datetime(df_digit_temp['sales_date'], format='%m/%d/%Y')
-
-df_digit_temp['post_date']=pd.to_datetime(df_digit_temp['post_date'])
-df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
-df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
-
-#df=df.sort_values(by=['locationname', 'naics_code','post_date'])
-#3 DIGIT
-
-df_digit_temp=df_digit_temp.groupby(['post_date']).sum() #group by postdate
-df_digit_temp.reset_index(inplace=True)
-#df_digit_temp=
-df_digit_temp=df_digit_temp.merge(idx17to21, how='right', on=['post_date'])
-df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
-df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
-
-#GRAPH 2
-# 3 Digit NAICS Graph
-clicked_unstack_2=st.checkbox('Unstack Table', key='clicked_unstacked_2')
-if clicked_unstack_2:
-    try:
-        unstacked_graphs(df_digit_temp,digit3)
-    except:
-        pass
-else:            
-    stacked_graphs(df_digit_temp,digit3)
+if years_selected:
 
 
-#Beginning of 2 Digit Analysis
-digit2=digit3[0:2]
-df_digit_temp2=df[df['naics_code'].astype(str).str[0:2]==digit2]
-df_digit_temp2['post_date'] =  pd.to_datetime(df_digit_temp2['post_date'], format='%m/%d/%Y')
-df_digit_temp2['sales_date'] =  pd.to_datetime(df_digit_temp2['sales_date'], format='%m/%d/%Y')
-df_digit_temp2['post_date']=pd.to_datetime(df_digit_temp2['post_date'])
-df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
-df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
-#df=df.sort_values(by=['locationname', 'naics_code','post_date'])
-#3 DIGIT
-end_date=str(df['post_date'].max())[0:10]
-df_digit_temp2=df_digit_temp2.groupby(['post_date']).sum() #group by postdate
-df_digit_temp2.reset_index(inplace=True)
-idx17to21=pd.DataFrame(data=pd.date_range(start='2017-1-1',end=end_date,freq='MS'), columns=['post_date'])
-#df_digit_temp2=
-df_digit_temp2=df_digit_temp2.merge(idx17to21, how='right', on=['post_date'])
-df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
-df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
+    st.subheader('Aggregated NAICS Information')
+    st.write('Information presented below can underrepresent local distribution due to data limitations related to collection, reporting, aggregation and privacy')
 
-#GRAPH 3
-# 2 Digit NAICS Graph
-clicked_unstack_3=st.checkbox('Unstack Table', key='clicked_unstacked_3')
-if clicked_unstack_3:
-    try:
-        unstacked_graphs(df_digit_temp2,digit2)
-    except:
-        pass
-else:            
-    stacked_graphs(df_digit_temp2,digit2)
+    digit3=df[df['dfa_naics_title']==naics_selected]['naics_code'].iloc[0].astype(str)[0:3]
+    df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
+    # 3 Digit naics names df_digit_temp
+    df_digit_temp=df[df['naics_code'].astype(str).str[0:3]==digit3]
+    df_digit_temp['post_date'] =  pd.to_datetime(df_digit_temp['post_date'], format='%m/%d/%Y')
+    df_digit_temp['sales_date'] =  pd.to_datetime(df_digit_temp['sales_date'], format='%m/%d/%Y')
 
-#DOWNLOAD FILE DEPRECATED
-#df_download=df_using.copy()
-#df_download.set_axis(['location name','naics code','naics title','post_date','sales/use date','tax distributed','rebate','tax rate','taxables sales','current naics code','new naics title','description','update note','sales year','sales month'],axis=1,inplace=True)
-#df_download=df_download[['location name','naics code','post_date','tax distributed','tax rate','rebate','update note','description']]
-#df_download['post_date']=df_download['post_date'].astype(str).str[0:10]
-#CREATING A DOWNLOAD BUTTON 
-#if st.button('Generate Download Link',help="Download all data available for the Geography and NAICS Code selected"):
-#    csv = df_download.to_csv(index=False)
-#    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-#    #grouping_file_name=geography_selected+"_"+geography_selection
-#    file_name=geography_selected+"_"+geography_selection+"_TaxesDistribution.csv"
-#    href = f'<a href="data:file/csv;base64,{b64}" download={file_name}>Download CSV File</a>'
-#    st.markdown(href, unsafe_allow_html=True)
+    df_digit_temp['post_date']=pd.to_datetime(df_digit_temp['post_date'])
+    df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
+    df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
 
-#create download button
-data_download=df[['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
-data_download=data_download.to_csv(index=False).encode('utf-8')
-st.download_button(label="Download data for "+geography_selected +" as CSV",data=data_download,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
-del data_download
+    #df=df.sort_values(by=['locationname', 'naics_code','post_date'])
+    #3 DIGIT
+
+    df_digit_temp=df_digit_temp.groupby(['post_date']).sum() #group by postdate
+    df_digit_temp.reset_index(inplace=True)
+    #df_digit_temp=
+    df_digit_temp=df_digit_temp.merge(idx17to21, how='right', on=['post_date'])
+    df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
+    df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
+
+    #GRAPH 2
+    # 3 Digit NAICS Graph
+    if len(years_selected)>0:
+        clicked_unstack_2=st.checkbox('Unstack Table', key='clicked_unstacked_2')
+        if clicked_unstack_2:
+            try:
+                unstacked_graphs(df_digit_temp,digit3)
+            except:
+                pass
+        else:            
+            stacked_graphs(df_digit_temp,digit3)
+
+        #download option 2
+        #create download button
+        data_download2=df_using[(df_using['naics_code'].astype(str).str[0:3]==naics_code4[0:3]) & (df_using['post_year'].astype(str).isin(years_selected))][['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
+        data_download2=data_download2.to_csv(index=False).encode('utf-8')
+        st.download_button(key='data_download2',label="Download 3 Digit data for "+geography_selected +" as CSV",data=data_download2,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
+
+
+    #Beginning of 2 Digit Analysis
+    digit2=digit3[0:2]
+    df_digit_temp2=df[df['naics_code'].astype(str).str[0:2]==digit2]
+    df_digit_temp2['post_date'] =  pd.to_datetime(df_digit_temp2['post_date'], format='%m/%d/%Y')
+    df_digit_temp2['sales_date'] =  pd.to_datetime(df_digit_temp2['sales_date'], format='%m/%d/%Y')
+    df_digit_temp2['post_date']=pd.to_datetime(df_digit_temp2['post_date'])
+    df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
+    df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
+    #df=df.sort_values(by=['locationname', 'naics_code','post_date'])
+    #3 DIGIT
+    end_date=str(df['post_date'].max())[0:10]
+    df_digit_temp2=df_digit_temp2.groupby(['post_date']).sum() #group by postdate
+    df_digit_temp2.reset_index(inplace=True)
+    idx17to21=pd.DataFrame(data=pd.date_range(start='2017-1-1',end=end_date,freq='MS'), columns=['post_date'])
+    #df_digit_temp2=
+    df_digit_temp2=df_digit_temp2.merge(idx17to21, how='right', on=['post_date'])
+    df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
+    df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
+
+    #GRAPH 3
+    # 2 Digit NAICS Graph
+    if len(years_selected)>0:
+        clicked_unstack_3=st.checkbox('Unstack Table', key='clicked_unstacked_3')
+        if clicked_unstack_3:
+            try:
+                unstacked_graphs(df_digit_temp2,digit2)
+            except:
+                pass
+        else:            
+            stacked_graphs(df_digit_temp2,digit2)
+        #download option 3
+        #create download button
+        data_download3=df_using[(df_using['naics_code'].astype(str).str[0:2]==naics_code4[0:2]) & (df_using['post_year'].astype(str).isin(years_selected))][['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
+        data_download3=data_download3.to_csv(index=False).encode('utf-8')
+        st.download_button(key='data_download3',label="Download 2 Digit data for "+geography_selected +" as CSV",data=data_download3,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
+
+
+    #DOWNLOAD FILE DEPRECATED
+    #df_download=df_using.copy()
+    #df_download.set_axis(['location name','naics code','naics title','post_date','sales/use date','tax distributed','rebate','tax rate','taxables sales','current naics code','new naics title','description','update note','sales year','sales month'],axis=1,inplace=True)
+    #df_download=df_download[['location name','naics code','post_date','tax distributed','tax rate','rebate','update note','description']]
+    #df_download['post_date']=df_download['post_date'].astype(str).str[0:10]
+    #CREATING A DOWNLOAD BUTTON 
+    #if st.button('Generate Download Link',help="Download all data available for the Geography and NAICS Code selected"):
+    #    csv = df_download.to_csv(index=False)
+    #    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
+    #    #grouping_file_name=geography_selected+"_"+geography_selection
+    #    file_name=geography_selected+"_"+geography_selection+"_TaxesDistribution.csv"
+    #    href = f'<a href="data:file/csv;base64,{b64}" download={file_name}>Download CSV File</a>'
+    #    st.markdown(href, unsafe_allow_html=True)
+
+    if len(years_selected)>0:
+        #create download button for full data download
+        data_download4=df_using[(df_using['naics_code'].astype(str).str[0:4]==naics_code4) & (df_using['post_year'].astype(str).isin(years_selected))][['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
+        data_download4=data_download4.to_csv(index=False).encode('utf-8')
+        st.download_button(key='data_download4',label="Download Full data for "+geography_selected +" as CSV",data=data_download4,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
+        try:
+            del data_download1,data_download2,data_download3,data_download4
+        except:
+            pass
+else:
+    pass
 
 
 #CREATING THE FOOTNOTE AND INSERT LOGO
@@ -464,7 +508,4 @@ with col2:
     st.image("https://youraedi.com/wp-content/uploads/2020/08/aediLogoDownload.png",width=100,use_column_width=False,output_format='JPEG')
 with col3:
     st.write(" ")
-
-
-
 
