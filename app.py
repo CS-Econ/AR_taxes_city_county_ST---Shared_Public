@@ -110,9 +110,6 @@ if (geography_selection=='City'):
         if st.session_state.geo_ss!=geography_selected:
             st.session_state.geo_ss=geography_selected            
             df=ss_city()
-            #sql='SELECT * FROM `statetaxes-dfa.arkansas_taxes.city_tax_view` WHERE location_name ='+ "'"+ geography_selected+"'"
-            #df = pandas_gbq.read_gbq(sql, credentials=credentials)
-            #df.columns=['locationname','naics_code','dfa_naics_title','post_date','sales_date','total','rebate','tax_rate','taxable_sales','new_naics_code','new_naics_title','description','modified_indicator']
             #NAICS Choice DROPDOWN
             naics_choices=sorted(df['dfa_naics_title'].unique())
             naics_selected=st.selectbox('Select NAICS',naics_choices)            
@@ -128,7 +125,8 @@ if (geography_selection=='City'):
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
             df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)         
+            naics_code4=df_using[~df_using['naics_code'].isnull()]['naics_code'].astype(str).str[0:4].iloc[0]
+            
             
             #DESCRIPTION OF NAICS CODE
             with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
@@ -153,8 +151,7 @@ if (geography_selection=='City'):
             df_using['post_date']=pd.to_datetime(df_using['post_date'])
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
-            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)            
+            df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values                       
             naics_code4=df_using[~df_using['naics_code'].isnull()]['naics_code'].astype(str).str[0:4].iloc[0]
             #DESCRIPTION OF NAICS CODE
             with st.expander('Expand to see Description of NAICS Code '+ str(naics_code4),expanded=False):
@@ -194,7 +191,8 @@ else:
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
             df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
-            #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
+            naics_code4=df_using[~df_using['naics_code'].isnull()]['naics_code'].astype(str).str[0:4].iloc[0]
+            
 
             #DESCRIPTION OF NAICS CODE
             with st.expander('Expand to see Description of NAICS Code '+ str(df_using['naics_code'].iloc[0]),expanded=False):
@@ -223,6 +221,7 @@ else:
             df_using['post_year']=df_using['post_date'].dt.year
             df_using['post_month']=df_using['post_date'].dt.strftime('%b')
             df_using=df_using.sort_values(by=['locationname', 'naics_code','post_date']) #sorting data to take into account missing values
+            naics_code4=df_using[~df_using['naics_code'].isnull()]['naics_code'].astype(str).str[0:4].iloc[0]
             #df_using=df[(df['post_date'].astype('str').str[0:4]).isin(years_selected)
 
             #DESCRIPTION OF NAICS CODE
@@ -280,9 +279,7 @@ def unstacked_graphs(fn_df,naics_selection_name):
         marker=dict(color='navy', size=2),
         showlegend=True
     )    
-    #fig.update_xaxes(
-    #dtick="M1",
-    #tickformat="%b%Y")
+    
     fig.update_layout(
         yaxis_title='Estimated Tax Distribution' ,
         xaxis_title='Month',
@@ -406,12 +403,11 @@ if years_selected:
     df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
     df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
 
-    #df=df.sort_values(by=['locationname', 'naics_code','post_date'])
+    
     #3 DIGIT
 
     df_digit_temp=df_digit_temp.groupby(['post_date']).sum() #group by postdate
-    df_digit_temp.reset_index(inplace=True)
-    #df_digit_temp=
+    df_digit_temp.reset_index(inplace=True)    
     df_digit_temp=df_digit_temp.merge(idx17to21, how='right', on=['post_date'])
     df_digit_temp['post_year']=df_digit_temp['post_date'].dt.year
     df_digit_temp['post_month']=df_digit_temp['post_date'].dt.strftime('%b')
@@ -443,13 +439,12 @@ if years_selected:
     df_digit_temp2['post_date']=pd.to_datetime(df_digit_temp2['post_date'])
     df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
     df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
-    #df=df.sort_values(by=['locationname', 'naics_code','post_date'])
+    
     #3 DIGIT
     end_date=str(df['post_date'].max())[0:10]
     df_digit_temp2=df_digit_temp2.groupby(['post_date']).sum() #group by postdate
     df_digit_temp2.reset_index(inplace=True)
-    idx17to21=pd.DataFrame(data=pd.date_range(start='2017-1-1',end=end_date,freq='MS'), columns=['post_date'])
-    #df_digit_temp2=
+    idx17to21=pd.DataFrame(data=pd.date_range(start='2017-1-1',end=end_date,freq='MS'), columns=['post_date'])    
     df_digit_temp2=df_digit_temp2.merge(idx17to21, how='right', on=['post_date'])
     df_digit_temp2['post_year']=df_digit_temp2['post_date'].dt.year
     df_digit_temp2['post_month']=df_digit_temp2['post_date'].dt.strftime('%b')
@@ -470,21 +465,6 @@ if years_selected:
         data_download3=df_using[(df_using['naics_code'].astype(str).str[0:2]==naics_code4[0:2]) & (df_using['post_year'].astype(str).isin(years_selected))][['locationname','naics_code','dfa_naics_title','total','rebate','post_date']]
         data_download3=data_download3.to_csv(index=False).encode('utf-8')
         st.download_button(key='data_download3',label="Download 2 Digit data for "+geography_selected +" as CSV",data=data_download3,file_name=geography_selected+' tax_data'+'.csv',mime="text/csv")
-
-
-    #DOWNLOAD FILE DEPRECATED
-    #df_download=df_using.copy()
-    #df_download.set_axis(['location name','naics code','naics title','post_date','sales/use date','tax distributed','rebate','tax rate','taxables sales','current naics code','new naics title','description','update note','sales year','sales month'],axis=1,inplace=True)
-    #df_download=df_download[['location name','naics code','post_date','tax distributed','tax rate','rebate','update note','description']]
-    #df_download['post_date']=df_download['post_date'].astype(str).str[0:10]
-    #CREATING A DOWNLOAD BUTTON 
-    #if st.button('Generate Download Link',help="Download all data available for the Geography and NAICS Code selected"):
-    #    csv = df_download.to_csv(index=False)
-    #    b64 = base64.b64encode(csv.encode()).decode()  # some strings <-> bytes conversions necessary here
-    #    #grouping_file_name=geography_selected+"_"+geography_selection
-    #    file_name=geography_selected+"_"+geography_selection+"_TaxesDistribution.csv"
-    #    href = f'<a href="data:file/csv;base64,{b64}" download={file_name}>Download CSV File</a>'
-    #    st.markdown(href, unsafe_allow_html=True)
 
     if len(years_selected)>0:
         #create download button for full data download
@@ -508,4 +488,3 @@ with col2:
     st.image("https://youraedi.com/wp-content/uploads/2020/08/aediLogoDownload.png",width=100,use_column_width=False,output_format='JPEG')
 with col3:
     st.write(" ")
-
